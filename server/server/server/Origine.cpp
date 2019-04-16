@@ -8,34 +8,36 @@
 #pragma comment (lib,"Ws2_32.lib")
 using namespace std;
 
-
-SOCKET	remoteSocket;
 SOCKADDR_IN Client_addr;
 int ls_result;
 int sin_size;
 
-unsigned int __stdcall clientHandler(void*){
+unsigned int __stdcall clientHandler(void* re){
+		SOCKET &remoteSocket = *(SOCKET*)re;
 		ifstream inFile;
-		inFile.open("../data.txt");
+		inFile.open("data.txt");
 		char buffer[3];
 		recv(remoteSocket, buffer, sizeof(buffer), 0);
 		cout << "riga richiesta : " << buffer << endl;
 		int n = stoi(buffer);
-		char ok[256] = "errore";
+		char ok[1024] = "errore";
 		if (!inFile) {
 			cout << "Errore nell'apertura del file ";
 		}
 		else {
 			
-			for (int i = 0; i <= n; n++) {
-					inFile.getline(ok, n);
+			for (int i = 0; i <= n; i++) {
+					inFile.getline(ok, 1024);
 				}
 			}
 		send(remoteSocket, ok, strlen(ok), 0);
+		inFile.close();
+		return 0;
 }
 
 int main()
 {
+	SOCKET	remoteSocket;
 	SOCKET	listenSocket;
 	SOCKADDR_IN Server_addr;
 	short port;
@@ -66,7 +68,7 @@ int main()
 		sin_size = sizeof(struct sockaddr_in);
 		remoteSocket = accept(listenSocket, (struct sockaddr *)&Client_addr, &sin_size);
 		cout << "client " << inet_ntoa(Client_addr.sin_addr) << "  " << ntohs(Client_addr.sin_port) << endl;
-		_beginthreadex(0, 0, &clientHandler, (void*)remoteSocket, 0, 0);
+		_beginthreadex(0, 0, &clientHandler, (void*) &remoteSocket, 0, 0);
 	}
 
 	cout << "Chiudo il Server" << endl;
